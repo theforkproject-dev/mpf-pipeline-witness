@@ -216,15 +216,28 @@ def verify_receipt(
     receipt: Mapping[str, Any],
     keyring: Mapping[str, str],
     expected_previous_state_root: bytes | None = None,
+    external_subjects: Mapping[str, Mapping[str, Any]] | None = None,
 ) -> tuple[bool, list[str]]:
     """Verify a receipt's signatures and state-root continuity.
 
+    Most signatures in a receipt's signature_set cover the receipt's own
+    canonical payload. Some signatures (notably L1 witness signatures in
+    observation profiles) cover an *external subject* that is referenced
+    from the receipt body but signed independently. Pass `external_subjects`
+    to tell the verifier which key IDs sign which external subject.
+
     Args:
         receipt: A complete receipt object as produced by `assemble_receipt`.
-        keyring: Mapping of `key_id` to public-key string (`ed25519:<b64>` or bare base64).
+        keyring: Mapping of `key_id` to public-key string (`ed25519:<b64>` or
+            bare base64).
         expected_previous_state_root: If provided, the receipt's
             `previous_state_root` field MUST match this value (32 bytes).
             Used by chain verifiers; pass None for a single-receipt check.
+        external_subjects: Optional mapping of `key_id` -> the canonical
+            JSON subject that key signed (instead of the receipt payload).
+            Verifier reconstructs and JCS-canonicalizes the subject and
+            checks the signature against it. Any key_id NOT in this map
+            is verified against the receipt payload.
 
     Returns:
         A tuple `(ok, errors)` where `ok` is True iff every check passed and
@@ -267,16 +280,21 @@ def verify_receipt(
             )
 
     # Signature verification
-    canonical_bytes = canon.canonicalize(payload)
+    canonical_payload_bytes = canon.canonicalize(payload)
     sig_set = receipt["signature_set"]
     if not isinstance(sig_set, dict) or not sig_set:
         errors.append("signature_set must be a non-empty object")
         return False, errors
+    ext = external_subjects or {}
     for key_id, sig_b64 in sig_set.items():
         if key_id not in keyring:
             errors.append(f"signature key_id {key_id!r} not in keyring")
             continue
-        if not crypto.verify_signature(keyring[key_id], canonical_bytes, sig_b64):
+        if key_id in ext:
+            signed_bytes = canon.canonicalize(ext[key_id])
+        else:
+            signed_bytes = canonical_payload_bytes
+        if not crypto.verify_signature(keyring[key_id], signed_bytes, sig_b64):
             errors.append(f"signature for key_id {key_id!r} failed verification")
 
     # State-root recomputation
