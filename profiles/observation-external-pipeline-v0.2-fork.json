@@ -1,0 +1,110 @@
+{
+  "profile_id": "mpf.profile.observation.external-pipeline.v0.2-fork",
+  "profile_version": "1.0.0",
+  "profile_class": "observation",
+  "extends": "mpf.profile.action.observed-l1.v0.2",
+  "extension_rationale": "MPF v0.2 §15 defines observed-l1.v0.2 as 'observed agent actions'. This profile extends the same conformance class to non-agent observation of external deterministic pipelines per §9.4.1, with actor.type=external_pipeline. It uses the baseline JCS canonicalization required by §2.9 and does not introduce any non-baseline canonicalization.",
+  "conformance_class": "mpf-0.2-action-observed-conformant",
+  "conformance_section_ref": "MPF v0.2 §20.2",
+  "actor_types_admitted": [
+    "external_pipeline",
+    "code"
+  ],
+  "capability_token_enforced": false,
+  "intent_layer": "none",
+  "intent_attested_required": false,
+  "canonicalization": {
+    "scheme": "RFC 8785 JCS",
+    "applies_to_objects": [
+      "receipts",
+      "certificate",
+      "registries",
+      "policy bundle",
+      "witness subjects",
+      "admission manifest"
+    ],
+    "applies_to_artifacts": [
+      "certificate.json",
+      "receipts.jsonl (line by line)",
+      "keyring.json",
+      "action-registry.json",
+      "witness-registry-epoch.json",
+      "admission-manifest.json",
+      "checkpoint.json",
+      "verification.json",
+      "replay.json"
+    ]
+  },
+  "observation_profile_declarations": {
+    "source_identity_required_fields": [
+      "url",
+      "expected_schema_digest_or_schema_version",
+      "pipeline_identity (repo, commit, or stable identifier where available)"
+    ],
+    "observer_code_identity_required": "sha256 digest of observer module bytes",
+    "validator_code_identity_required": "sha256 digest of validator module bytes",
+    "cadence_required": true,
+    "guard_key_semantics": "(source_url, observed_timestamp)",
+    "guard_key_rationale": "observed_timestamp is supplied by the upstream artifact (current.asOf) which provides a stable upstream-pinned identifier per observation cycle.",
+    "retention_mode": "raw_bytes_retained",
+    "retention_rationale": "Per §9.4.1, higher-assurance observation profiles SHOULD retain bytes because public URLs are mutable. Digest+URL alone is insufficient for replay.",
+    "witness_independent_fetch": false,
+    "witness_independent_fetch_rationale": "MVP is observed-l1-class. Witness independence at fetch time is a §20.5 (cross-boundary) concern; this profile does not claim cross-boundary conformance.",
+    "failure_modes_recognized": [
+      "source.unavailable",
+      "validation.failed",
+      "validator.exception",
+      "bytes.changed_in_interval"
+    ]
+  },
+  "witness_requirements": {
+    "L1_mechanical_threshold": 1,
+    "L2_policy_required": false,
+    "L3_domain_required": false,
+    "operator_independence_class": "co-resident",
+    "operator_independence_rationale": "MVP runs the L1 witness on the same node as the gateway/observer. This is acknowledged as the weaker assurance position per §11.5; the verifier profile reports it explicitly so relying parties can apply their own risk policy."
+  },
+  "evidence_mode": "full",
+  "bundle_artifacts_required": [
+    "certificate.json",
+    "receipts.jsonl",
+    "keyring.json",
+    "action-registry.json",
+    "witness-registry-epoch.json",
+    "admission-manifest.json",
+    "checkpoint.json",
+    "verification.json",
+    "replay.json"
+  ],
+  "bundle_artifacts_excluded": {
+    "policy-bundle.json": "L2 policy is optional in §9.4.1 and excluded from MVP.",
+    "policy-decision.json": "Same.",
+    "operator-registry.json": "Single-operator profile; operator identity is in admission-manifest.json instead.",
+    "transparency-log.jsonl": "Cross-boundary requirement (§20.5), not §20.2.",
+    "substrate-attestation.json": "TEE not required for §20.2.",
+    "domain-attestation.json": "L3 not required."
+  },
+  "verifier_must_recompute": [
+    "certificate digest (sha256 of JCS(certificate.json))",
+    "every receipt's payload digest and resulting state root",
+    "every receipt signature against the keyring",
+    "registry payload digests and operator signatures",
+    "admission manifest payload digest and operator signature",
+    "the receipt log's previous_state_root continuity",
+    "validator's deterministic invariants over the fetched bytes"
+  ],
+  "verifier_must_reject_on": [
+    "any signature failure",
+    "any state-root recomputation mismatch",
+    "any registry validity-window failure at observed_at time",
+    "any claim of policy-gated execution, capability-token enforcement, or upstream-process control",
+    "any actor.type outside the admitted set",
+    "any non-baseline canonicalization claiming mpf-0.2 conformance"
+  ],
+  "registration": {
+    "implementation_codebase": "github.com/theforkproject-dev/mpf-pipeline-witness",
+    "operator": "theforkproject-dev",
+    "operator_contact": "fork-node-01@theforkproject.com",
+    "registration_target": "github.com/amotivv-inc/memory-pod-fabric/IMPLEMENTATIONS.md"
+  }
+}
