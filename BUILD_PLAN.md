@@ -2,7 +2,7 @@
 
 **Author:** Fork Node 01
 **Date:** May 9, 2026
-**Status:** Pre-implementation. No code written yet.
+**Status:** Phases 1–6 complete. Phases 7–8 (deployment + registration PR) deferred. Last updated: May 9, 2026 end of session, commit `9ff787b`.
 **Conformance target:** [MPF v0.2 draft](https://github.com/amotivv-inc/memory-pod-fabric/blob/main/SPECIFICATION-v0.2-draft.md) at commit `ab5d308`
 **Conformance class:** §20.2 *MPF v0.2 Action Observed Conformant*
 **Profile ID (proposed):** `mpf.profile.observation.external-pipeline.v0.2-fork`
@@ -241,6 +241,8 @@ mpf-pipeline-witness/
 
 ### Phase 1 — Foundations (no observation cycle yet)
 
+**✅ Done** · commit `218a171` · 48 tests
+
 Build and test the primitives in isolation. No I/O, no real network.
 
 - [ ] `canon.py` with JCS via `rfc8785` package + round-trip tests against published RFC 8785 vectors
@@ -252,6 +254,8 @@ Build and test the primitives in isolation. No I/O, no real network.
 
 ### Phase 2 — Registry and admission
 
+**✅ Done** · commit `db61c65` · +37 tests
+
 - [ ] Genesis Action Registry epoch declaring `pipeline.snapshot.observe.v1`, signed
 - [ ] Genesis Witness Registry epoch authorizing the L1 witness key
 - [ ] Admission Manifest assembly per §3.14 + §9.4.1 binding requirements
@@ -260,6 +264,8 @@ Build and test the primitives in isolation. No I/O, no real network.
 **Done when:** registries verify against their own signatures, admission manifest binds all required fields, profile is loadable.
 
 ### Phase 3 — Observer + validator
+
+**✅ Done** · commit `b3444e2` · +25 tests
 
 - [ ] HTTP fetch with retries, byte-exact commitment
 - [ ] Validator: z-score reproducibility check, archive coherence check, sample count, coverage percentage (the five checks already implemented in reconnaissance)
@@ -270,6 +276,8 @@ Build and test the primitives in isolation. No I/O, no real network.
 
 ### Phase 4 — Witness + receipt chain
 
+**✅ Done** · commit `6c6c6e6` · +26 tests
+
 - [ ] L1 witness signing observation/validation subjects per §11.1
 - [ ] Anti-equivocation guard-key store (`(source_url, observed_timestamp)` chosen from §9.4.1's options)
 - [ ] Full receipt sequence (`session.start` → `checkpoint`) for one cycle
@@ -278,6 +286,8 @@ Build and test the primitives in isolation. No I/O, no real network.
 **Done when:** a complete one-cycle receipt log writes, state roots chain correctly, witness signatures verify.
 
 ### Phase 5 — Certificate bundle
+
+**✅ Done** · commit `c18efc4` · +11 tests
 
 - [ ] Bundle assembler producing the eight artifacts in §2.7 above
 - [ ] All JSON artifacts JCS-canonicalized
@@ -288,6 +298,8 @@ Build and test the primitives in isolation. No I/O, no real network.
 
 ### Phase 6 — Verifier
 
+**✅ Done** · commit `9ff787b` · +14 tests
+
 - [ ] FastAPI app implementing §14.2 required checks
 - [ ] CORS-open responses
 - [ ] CLI verifier (`scripts/verify-bundle.py`)
@@ -297,6 +309,8 @@ Build and test the primitives in isolation. No I/O, no real network.
 
 ### Phase 7 — Public deployment
 
+**⏸ Pending** · deferred for next session (deployment realities dominate code time)
+
 - [ ] Observer loop wired to fork-node `create_task` recurrence at `interval_minutes: 30`
 - [ ] Public storage for bundles (R2 or fork-node nginx, CORS-open)
 - [ ] Public verifier endpoint
@@ -305,6 +319,8 @@ Build and test the primitives in isolation. No I/O, no real network.
 **Done when:** at least one bundle is publicly fetchable + verifiable end-to-end by an independent party.
 
 ### Phase 8 — Conformance evidence + IMPLEMENTATIONS.md PR
+
+**⏸ Pending** · requires Phase 7 deployed and ≥24h of public bundles
 
 - [ ] At least 24 hours of running cycles producing bundles
 - [ ] Public verification evidence URL
