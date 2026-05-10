@@ -2,7 +2,7 @@
 
 **Author:** Fork Node 01
 **Date:** May 9, 2026
-**Status:** Phases 1–6 complete. Phases 7 (deployment), 8 (registration PR), and 9 (refactor to `mpf-implementer-template`) deferred and committed. Last updated: May 9, 2026 end of session, commit `9ff787b`.
+**Status:** Phases 1–6 complete. Phases 7 (deployment), 8 (registration PR), 9 (refactor to `mpf-implementer-template`), and 10 (v0.2.1 spec PRs reducing implementer friction) deferred and committed. Last updated: May 10, 2026, commit `3230005` + Phase 10 addition.
 **Conformance target:** [MPF v0.2 draft](https://github.com/amotivv-inc/memory-pod-fabric/blob/main/SPECIFICATION-v0.2-draft.md) at commit `ab5d308`
 **Conformance class:** §20.2 *MPF v0.2 Action Observed Conformant*
 **Profile ID (proposed):** `mpf.profile.observation.external-pipeline.v0.2-fork`
@@ -367,6 +367,44 @@ Most of the work in Phases 1–6 is one-time work that should not need to be rep
 - The four open questions in §6 below are landed as v0.2.1 clarification PRs upstream so future implementers don't hit the same ambiguities.
 
 **Estimated effort:** ~4–6 hours refactoring + 2–3 hours STAGES.md + 1–2 hours per upstream clarification PR. Roughly a full focused day.
+
+### Phase 10 — v0.2.1 spec PRs reducing implementer friction
+
+**⏸ Pending** · starts after Phase 9 (template extraction surfaces what generalizes cleanly vs. what doesn't)
+
+Distinct from §6's open questions, which are deep technical ambiguities. Phase 10 targets *presentation friction* the implementer experience surfaced — places where the spec is correct but asks the reader to do work it could have done for them. Three landed PRs of roughly equal size, each addressing a real first-pass-implementer error.
+
+**Why Phase 10 sits after Phase 9, not before:**
+
+- The template extraction is the test of which abstractions actually generalize. If a presentation fix in v0.2.1 doesn't survive the extraction, it was the wrong fix.
+- Phase 9's STAGES.md guide will surface which spec sections implementers most need help with. Phase 10 turns that signal into upstream PRs rather than just template documentation.
+- v0.2.1 PRs land more credibly when proposed by an implementer who has both built against v0.2 *and* extracted a reusable template from the build. "This friction surfaced when I built X, was confirmed by Y building Z from the template, and these three changes would prevent it" is a stronger PR than "this confused me when I built X."
+
+**The three proposed v0.2.1 PRs:**
+
+**PR A — Single-Operator Profile subsection.** A short subsection (probably in §4 or as a new §4.8) explicitly noting that for simple deployments, operator = gateway operator = pod operator = witness operator = single party with one key. Most v0.2 implementations will be in this shape, and the multi-party role taxonomy in §4 is correct for high-assurance deployments but unnecessarily abstract for the 80% case. The subsection should state which collapses are permitted under which assurance profiles (e.g., single-operator is fine for `observed-l1` and `controlled-l1`; cross-boundary requires distinct operators).
+
+**PR B — Bundle artifacts by conformance class table.** A table in §13 or §20 mapping each §13.2 artifact to MUST/SHOULD/MAY for each §20.{1,2,3,4,5} conformance class. Implementers currently have to read §13 + §15 + §20 simultaneously to figure out which subset of the 15-artifact list applies to their target conformance. The table answers that in one place. Source for the table: this implementation's actual choices for §20.2 (8 mandatory + 4 profile-specific), plus Strata's choices for higher classes.
+
+**PR C — Signing topology diagram.** A small diagram in §11 (probably extending §11.1) showing what is signed by whom over what bytes:
+
+- Operator signs the receipt payload (the receipt JSON minus signature_set and state_root) over JCS-canonical bytes.
+- L1 witness signs the canonical *protocol subject* (e.g., the observation subject for observation profiles), NOT the receipt payload, over JCS-canonical bytes.
+- Both signatures coexist in a receipt's `signature_set` but cover different bytes. Verifiers must use signing role to determine which bytes each signature should be checked against.
+
+This was the single most non-obvious architectural fact in v0.2 — stated correctly in §11.1 but in passing. A diagram would have prevented the first-pass implementer error this implementation hit and recovered from in Phase 4.
+
+**Validation criterion:** each of the three PRs lands as a separate, narrowly scoped change. None expand v0.2's normative surface; all clarify or reorganize what is already there.
+
+**Done when:**
+
+- All three PRs are merged into `amotivv-inc/memory-pod-fabric`.
+- The merged spec is tagged or otherwise marked as `v0.2.1`.
+- The STAGES.md guide in `mpf-implementer-template` is updated to reference the new sections by number rather than working around their absence.
+
+**Estimated effort:** ~1–2 hours per PR for drafting, plus review cycles. Probably spread across a week as the working group has time to review.
+
+**Note on scope:** Phase 10 is intentionally narrow. The four §6 open questions (state-root construction, profile naming, verifier independence, replay contents) are *separate* from Phase 10's presentation fixes. Some may eventually become v0.3 spec changes; others may be resolved by profile conventions. Phase 10 does not entangle with them.
 
 ---
 

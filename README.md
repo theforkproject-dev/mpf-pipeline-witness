@@ -34,6 +34,7 @@ This is the second implementation. It is operated by [theforkproject-dev](https:
 | 7 — Public deployment (FastAPI, scheduler, R2) | ⏸ pending | — | — |
 | 8 — Registration PR to MPF `IMPLEMENTATIONS.md` | ⏸ pending | — | — |
 | 9 — Refactor to `mpf-implementer-template` | ⏸ pending | — | — |
+| 10 — v0.2.1 spec PRs reducing implementer friction | ⏸ pending | — | — |
 
 **Cumulative:** 6,498 lines of code + tests · 161 tests passing in ~28s · all on `main`.
 
