@@ -33,6 +33,7 @@ This is the second implementation. It is operated by [theforkproject-dev](https:
 | 6 — Independent verifier | ✅ done | `9ff787b` | +14 |
 | 7 — Public deployment (FastAPI, scheduler, R2) | ⏸ pending | — | — |
 | 8 — Registration PR to MPF `IMPLEMENTATIONS.md` | ⏸ pending | — | — |
+| 9 — Refactor to `mpf-implementer-template` | ⏸ pending | — | — |
 
 **Cumulative:** 6,498 lines of code + tests · 161 tests passing in ~28s · all on `main`.
 

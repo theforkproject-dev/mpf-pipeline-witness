@@ -2,7 +2,7 @@
 
 **Author:** Fork Node 01
 **Date:** May 9, 2026
-**Status:** Phases 1–6 complete. Phases 7–8 (deployment + registration PR) deferred. Last updated: May 9, 2026 end of session, commit `9ff787b`.
+**Status:** Phases 1–6 complete. Phases 7 (deployment), 8 (registration PR), and 9 (refactor to `mpf-implementer-template`) deferred and committed. Last updated: May 9, 2026 end of session, commit `9ff787b`.
 **Conformance target:** [MPF v0.2 draft](https://github.com/amotivv-inc/memory-pod-fabric/blob/main/SPECIFICATION-v0.2-draft.md) at commit `ab5d308`
 **Conformance class:** §20.2 *MPF v0.2 Action Observed Conformant*
 **Profile ID (proposed):** `mpf.profile.observation.external-pipeline.v0.2-fork`
@@ -327,6 +327,46 @@ Build and test the primitives in isolation. No I/O, no real network.
 - [ ] PR to `amotivv-inc/memory-pod-fabric/IMPLEMENTATIONS.md` per the documented registration process
 
 **Done when:** the registration PR is merged and the implementation appears in `IMPLEMENTATIONS.md` as the second registered v0.2 implementation.
+
+### Phase 9 — Refactor to `mpf-implementer-template`
+
+**⏸ Pending** · starts only after Phase 8 (registered reference implementation in place)
+
+Most of the work in Phases 1–6 is one-time work that should not need to be repeated by future v0.2 implementers. This phase extracts the reusable core into a separate template repository so the cost of building a third or fourth v0.2 implementation drops from ~20–30 hours to ~3–5 hours (write a custom validator + observer, capture a fixture, run the template's test suite).
+
+**Why this happens after Phase 8, not before:**
+
+- Phase 7 (public deployment) will surface details about the FastAPI endpoint shape and run-loop scheduler integration that the template should encode. Extracting before Phase 7 means redoing parts of the template later.
+- A template that ships *before* any implementation is registered is lower-credibility than one that ships *after*. "Here is the template; here is the registered reference implementation that uses it" is stronger than "here is a template; trust me it works."
+- The registration PR itself benefits from having the reference implementation feel real and used before being held up as a model.
+
+**Scope:**
+
+- New repo: `theforkproject-dev/mpf-implementer-template` (Apache 2.0, public).
+- Extract reusable modules into a `mpf_witness_core` package:
+  - `canon` (JCS + NaN guard) — reusable verbatim
+  - `crypto` (Ed25519 + ed25519:&lt;b64&gt; format) — reusable verbatim
+  - `receipts` (§10.1 schema + state-root chain + `verify_receipt` with `external_subjects`) — reusable verbatim
+  - `witness` (L1Witness + GuardKeyStore + anti-equivocation) — reusable verbatim
+  - `registry` (Action / Witness epoch construction) — reusable with implementer providing the action entry contents
+  - `admission` (Admission Manifest builder) — reusable with implementer providing source-identity binding
+  - `bundle` (12-artifact assembly) — reusable with implementer providing actor type, upstream identity, warnings
+  - `gateway_base` (Gateway base class implementing the §9.4.1 flow) — reusable; implementer subclasses to plug in observation_subject construction
+- Extract verifier as `mpf_verifier` package — reusable verbatim, including the eight §14.2 checks and the CLI entrypoint.
+- Implementer-facing surface: a `impl_yourname/` directory with placeholder `observer.py`, `validator.py`, `profile.py` and TODO markers showing exactly what to fill in.
+- Approximately 131 of the 161 tests parameterize cleanly across implementations; the implementer adds 25–30 implementation-specific tests (their validator invariants, their end-to-end with their captured fixture).
+- Top-level `STAGES.md` guide drawn from this BUILD_PLAN, generalized: not "how I built EWS observation" but "how to build any v0.2 observation profile," with the gotchas surfaced explicitly (witness-signs-canonical-subject architecture, certificate self-digest pattern, validation-failure-still-completes-the-chain rule, surrogate-pair fixture trap, etc.).
+
+**Validation criterion:** the original `mpf-pipeline-witness` repo can be re-expressed as `mpf-implementer-template` plus an `impl_ews/` package of about 400–700 lines, and the test suite passes against the re-expressed implementation. If the extraction can't be done cleanly, the template isn't ready.
+
+**Done when:**
+
+- `mpf-implementer-template` is public, Apache 2.0, with a working example `impl_ews/` reference.
+- The template README explains the implementer surface in &lt;30 minutes of reading.
+- A `STAGES.md` guide captures the meta-process (contribute upstream first, pin choices and document, separate verifier from producer, test against real captured fixtures, fail loudly on validation, log open questions instead of guessing).
+- The four open questions in §6 below are landed as v0.2.1 clarification PRs upstream so future implementers don't hit the same ambiguities.
+
+**Estimated effort:** ~4–6 hours refactoring + 2–3 hours STAGES.md + 1–2 hours per upstream clarification PR. Roughly a full focused day.
 
 ---
 
